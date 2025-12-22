@@ -1,0 +1,58 @@
+
+📝[API] Bundle 1, Transaction 1(Swap)
+Instructions(8):
+1. Compute Budget Program
+2. Compute Budget Program
+3. Compute Budget Program
+4. Associated Token Program
+5. Unknown Program
+6. Unknown Program
+7. Unknown Program
+8. Unknown Program
+
+
+📝[API] Bundle 1, Transaction 5(Jito Tip)
+Instructions(4):
+1. Compute Budget Program
+2. Compute Budget Program
+3. System Program
+4. Unknown Program
+
+
+📝[API] Bundle 2, Transaction 1(Swap)
+Instructions(8):
+1. Compute Budget Program
+2. Compute Budget Program
+3. Compute Budget Program
+4. Associated Token Program
+5. Unknown Program
+6. Unknown Program
+7. Unknown Program
+8. Unknown Program
+
+
+📝[API] Bundle 2, Transaction 5(Jito Tip)
+Instructions(4):
+1. Compute Budget Program
+2. Compute Budget Program
+3. System Program
+4. Unknown Program
+
+
+📝[API] Bundle 3, Transaction 1(Swap)
+Instructions(7):
+1. Compute Budget Program
+2. Compute Budget Program
+3. Associated Token Program
+4. Unknown Program
+5. Unknown Program
+6. Unknown Program
+7. Unknown Program
+
+
+📝[API] Bundle 3, Transaction 2(Jito Tip)
+Instructions(4):
+1. Compute Budget Program
+2. Compute Budget Program
+3. System Program
+4. Unknown Program
