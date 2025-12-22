@@ -15,11 +15,13 @@
     "@solana/wallet-adapter-react-ui": "^0.9.39",
     "@solana/wallet-adapter-wallets": "^0.19.37",
     "@solana/web3.js": "^1.98.4",
+    "@solflare-wallet/sdk": "^1.4.2",
     "bs58": "^6.0.0",
     "jito-js-rpc": "^0.2.2",
     "next": "16.1.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
