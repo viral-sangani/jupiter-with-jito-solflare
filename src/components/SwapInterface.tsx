@@ -13,30 +13,31 @@ const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const BRANCHES = [
   [
     "Xsc9qvGR1efVDFGLrVsmkzv3qi45LTBjeUKSPmx9qEh",
-    "XspzcW1PRtgf6Wj92HCiZdjzKCyFekVD8P5Ueh3dRMX",
-    "XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp",
+    // "XspzcW1PRtgf6Wj92HCiZdjzKCyFekVD8P5Ueh3dRMX",
+    // "XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp",
   ],
   [
     "Xsa62P5mvPszXL1krVUnU5ar38bBSVcWAB6fmPCo5Zu",
     "XsCPL9dNWBMvFtTmwcCA5v3xWPSMEBCszbQdiLLq6aN",
-    "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB",
   ],
   [
     "Xs3eBt7uRfJX8QUs4suhyU8p2M6DoUDrJyWBa8LLZsg",
     "Xs7ZdzSHLU9ftNJsii5fCeJhoRWSC32SQGzGQtePxNu",
     "XsjFwUPiLofddX5cWFHW35GCbXcSu1BCUGfxoQAQjeL",
+    "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB",
   ],
 ];
 
 const MAX_TXS_PER_BUNDLE = 5;
-const RPC_ENDPOINT = "https://mainnet.helius-rpc.com/?api-key=6a01c832-320e-4aeb-83d3-af0adaaa3324";
+const RPC_ENDPOINT =
+  "https://mainnet.helius-rpc.com/?api-key=6a01c832-320e-4aeb-83d3-af0adaaa3324";
 
 export default function SwapInterface() {
   const { publicKey, signAllTransactions, wallet } = useWallet();
   // Hardcoded: 0.01 USDC = 10,000 (USDC has 6 decimals)
   const SWAP_AMOUNT = "10000";
   const [slippageBps, setSlippageBps] = useState("50");
-  const [jitoTip, setJitoTip] = useState("10000");
+  const [jitoTip, setJitoTip] = useState("30000");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
@@ -78,7 +79,7 @@ export default function SwapInterface() {
       const { bundles, totalBundles } = await buildResponse.json();
 
       setStatus(
-        `Signing ${totalSwaps} swap transactions + ${totalBundles} tip transactions...`,
+        `Signing ${totalSwaps} swap transactions + ${totalBundles} tip transactions...`
       );
 
       // Deserialize bundles and measure sizes BEFORE signing
@@ -96,7 +97,9 @@ export default function SwapInterface() {
 
         // Measure each transaction in this bundle
         let bundleSize = 0;
-        console.log(`\n  Bundle ${bundleIdx + 1} (${transactions.length} transactions):`);
+        console.log(
+          `\n  Bundle ${bundleIdx + 1} (${transactions.length} transactions):`
+        );
         transactions.forEach((tx: VersionedTransaction, txIdx: number) => {
           const size = tx.serialize().length;
           bundleSize += size;
@@ -106,13 +109,24 @@ export default function SwapInterface() {
         totalUnsignedSize += bundleSize;
       }
 
-      const totalUnsignedTxs = unsignedBundles.reduce((sum, b) => sum + b.length, 0);
+      const totalUnsignedTxs = unsignedBundles.reduce(
+        (sum, b) => sum + b.length,
+        0
+      );
       console.log(`\n  📊 Overall Unsigned Stats:`);
       console.log(`    Total bundles: ${bundles.length}`);
       console.log(`    Total transactions: ${totalUnsignedTxs}`);
       console.log(`    Total size: ${totalUnsignedSize} bytes`);
-      console.log(`    Average per bundle: ${(totalUnsignedSize / bundles.length).toFixed(2)} bytes`);
-      console.log(`    Average per transaction: ${(totalUnsignedSize / totalUnsignedTxs).toFixed(2)} bytes`);
+      console.log(
+        `    Average per bundle: ${(totalUnsignedSize / bundles.length).toFixed(
+          2
+        )} bytes`
+      );
+      console.log(
+        `    Average per transaction: ${(
+          totalUnsignedSize / totalUnsignedTxs
+        ).toFixed(2)} bytes`
+      );
       // Flatten for signing
       const allTransactions = unsignedBundles.flat();
 
@@ -128,12 +142,14 @@ export default function SwapInterface() {
         const bundle = bundles[bundleIdx];
         const signedBundle = signedTransactions.slice(
           txIndex,
-          txIndex + bundle.length,
+          txIndex + bundle.length
         );
 
         // Measure each transaction in this signed bundle
         let bundleSize = 0;
-        console.log(`\n  Bundle ${bundleIdx + 1} (${signedBundle.length} transactions):`);
+        console.log(
+          `\n  Bundle ${bundleIdx + 1} (${signedBundle.length} transactions):`
+        );
 
         // Serialize the signed transactions
         const serializedBundle = signedBundle.map((tx, txIdx) => {
@@ -170,17 +186,34 @@ export default function SwapInterface() {
       console.log(`    Total bundles: ${bundles.length}`);
       console.log(`    Total transactions: ${totalSignedTxs}`);
       console.log(`    Total size: ${totalSignedSize} bytes`);
-      console.log(`    Average per bundle: ${(totalSignedSize / bundles.length).toFixed(2)} bytes`);
-      console.log(`    Average per transaction: ${(totalSignedSize / totalSignedTxs).toFixed(2)} bytes`);
+      console.log(
+        `    Average per bundle: ${(totalSignedSize / bundles.length).toFixed(
+          2
+        )} bytes`
+      );
+      console.log(
+        `    Average per transaction: ${(
+          totalSignedSize / totalSignedTxs
+        ).toFixed(2)} bytes`
+      );
 
       // Calculate size difference
       const sizeDifference = totalSignedSize - totalUnsignedSize;
       const avgBundleDifference = sizeDifference / bundles.length;
       const avgTxDifference = sizeDifference / totalSignedTxs;
       console.log(`\n  📈 Size Increase After Signing:`);
-      console.log(`    Total increase: ${sizeDifference} bytes (+${((sizeDifference / totalUnsignedSize) * 100).toFixed(2)}%)`);
-      console.log(`    Average per bundle: ${avgBundleDifference.toFixed(2)} bytes`);
-      console.log(`    Average per transaction: ${avgTxDifference.toFixed(2)} bytes`);
+      console.log(
+        `    Total increase: ${sizeDifference} bytes (+${(
+          (sizeDifference / totalUnsignedSize) *
+          100
+        ).toFixed(2)}%)`
+      );
+      console.log(
+        `    Average per bundle: ${avgBundleDifference.toFixed(2)} bytes`
+      );
+      console.log(
+        `    Average per transaction: ${avgTxDifference.toFixed(2)} bytes`
+      );
       console.log(`\n🔍 Wallet: ${wallet?.adapter.name || "Unknown"}\n`);
 
       setStatus(`Submitting ${signedBundles.length} bundles to Jito...`);
@@ -205,21 +238,32 @@ export default function SwapInterface() {
         console.error(`  Error: ${submitData.error}`);
 
         if (submitData.failedBundles) {
-          console.error(`\n  Failed Bundles: ${submitData.failedBundles.length}/${signedBundles.length}`);
+          console.error(
+            `\n  Failed Bundles: ${submitData.failedBundles.length}/${signedBundles.length}`
+          );
           submitData.failedBundles.forEach((bundle: any) => {
             console.error(`    Bundle ${bundle.bundleIndex}: ${bundle.error}`);
           });
         }
 
-        if (submitData.successfulBundles && submitData.successfulBundles.length > 0) {
-          console.log(`\n  ✅ Successful Bundles: ${submitData.successfulBundles.length}/${signedBundles.length}`);
+        if (
+          submitData.successfulBundles &&
+          submitData.successfulBundles.length > 0
+        ) {
+          console.log(
+            `\n  ✅ Successful Bundles: ${submitData.successfulBundles.length}/${signedBundles.length}`
+          );
           submitData.successfulBundles.forEach((bundle: any) => {
-            console.log(`    Bundle ${bundle.bundleIndex}: ${bundle.bundleId} (slot: ${bundle.slot})`);
+            console.log(
+              `    Bundle ${bundle.bundleIndex}: ${bundle.bundleId} (slot: ${bundle.slot})`
+            );
           });
         }
 
         if (submitData.timeoutBundles) {
-          console.warn(`\n  ⏱️  Timeout Bundles: ${submitData.timeoutBundles.join(", ")}`);
+          console.warn(
+            `\n  ⏱️  Timeout Bundles: ${submitData.timeoutBundles.join(", ")}`
+          );
           console.warn(`  Note: ${submitData.note}`);
         }
 
@@ -228,11 +272,16 @@ export default function SwapInterface() {
         setStatus("Simulating failed transactions...");
 
         const connection = new Connection(RPC_ENDPOINT);
-        const failedBundleIndices = submitData.failedBundles?.map((b: any) => b.bundleIndex - 1) || [];
+        const failedBundleIndices =
+          submitData.failedBundles?.map((b: any) => b.bundleIndex - 1) || [];
 
         for (const bundleIdx of failedBundleIndices) {
           const bundle = signedBundles[bundleIdx];
-          console.log(`\n  Simulating Bundle ${bundleIdx + 1} (${bundle.length} transactions):`);
+          console.log(
+            `\n  Simulating Bundle ${bundleIdx + 1} (${
+              bundle.length
+            } transactions):`
+          );
 
           for (let txIdx = 0; txIdx < bundle.length; txIdx++) {
             const txString = bundle[txIdx];
@@ -245,8 +294,16 @@ export default function SwapInterface() {
               });
 
               if (simulation.value.err) {
-                console.error(`    ❌ Transaction ${txIdx + 1} simulation failed:`);
-                console.error(`       Error: ${JSON.stringify(simulation.value.err, null, 2)}`);
+                console.error(
+                  `    ❌ Transaction ${txIdx + 1} simulation failed:`
+                );
+                console.error(
+                  `       Error: ${JSON.stringify(
+                    simulation.value.err,
+                    null,
+                    2
+                  )}`
+                );
                 if (simulation.value.logs) {
                   console.error(`       Logs:`);
                   simulation.value.logs.forEach((log: string) => {
@@ -254,25 +311,39 @@ export default function SwapInterface() {
                   });
                 }
               } else {
-                console.log(`    ✅ Transaction ${txIdx + 1} simulation passed`);
+                console.log(
+                  `    ✅ Transaction ${txIdx + 1} simulation passed`
+                );
                 if (simulation.value.unitsConsumed) {
-                  console.log(`       Compute units: ${simulation.value.unitsConsumed}`);
+                  console.log(
+                    `       Compute units: ${simulation.value.unitsConsumed}`
+                  );
                 }
               }
             } catch (simError) {
-              console.error(`    ⚠️  Transaction ${txIdx + 1} simulation error:`);
-              console.error(`       ${simError instanceof Error ? simError.message : String(simError)}`);
+              console.error(
+                `    ⚠️  Transaction ${txIdx + 1} simulation error:`
+              );
+              console.error(
+                `       ${
+                  simError instanceof Error
+                    ? simError.message
+                    : String(simError)
+                }`
+              );
             }
           }
         }
 
         throw new Error(
-          `${submitData.error}. ${submitData.failedBundles?.length || 0} bundle(s) failed. Check console for detailed simulation results.`
+          `${submitData.error}. ${
+            submitData.failedBundles?.length || 0
+          } bundle(s) failed. Check console for detailed simulation results.`
         );
       }
 
       setStatus(
-        `Success! Submitted ${submitData.totalBundles} bundles. Total swaps: ${totalSwaps}`,
+        `Success! Submitted ${submitData.totalBundles} bundles. Total swaps: ${totalSwaps}`
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error occurred");
@@ -372,7 +443,9 @@ export default function SwapInterface() {
             >
               {loading
                 ? "Processing..."
-                : `Execute ${totalSwaps} Swaps (${estimatedBundles} bundle${estimatedBundles > 1 ? "s" : ""})`}
+                : `Execute ${totalSwaps} Swaps (${estimatedBundles} bundle${
+                    estimatedBundles > 1 ? "s" : ""
+                  })`}
             </button>
           </div>
 

@@ -32,16 +32,17 @@ export async function POST(request: NextRequest) {
     if (!branches || !Array.isArray(branches) || branches.length === 0) {
       return NextResponse.json(
         { error: "Missing or invalid branches array" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     if (!inputMint || !amount || !userPublicKey) {
       return NextResponse.json(
         {
-          error: "Missing required parameters: inputMint, amount, userPublicKey",
+          error:
+            "Missing required parameters: inputMint, amount, userPublicKey",
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
           error:
             "Jupiter API key not configured. Please set JUPITER_API_KEY environment variable.",
         },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
@@ -66,11 +67,13 @@ export async function POST(request: NextRequest) {
       if (!Array.isArray(branch) || branch.length === 0) {
         return NextResponse.json(
           { error: `Branch ${branchIdx + 1} is empty or invalid` },
-          { status: 400 },
+          { status: 400 }
         );
       }
 
-      console.log(`[Build] Processing branch ${branchIdx + 1} with ${branch.length} swaps`);
+      console.log(
+        `[Build] Processing branch ${branchIdx + 1} with ${branch.length} swaps`
+      );
 
       // Fetch all quotes for this branch in parallel
       const branchQuotePromises = branch.map((outputMint: string) => {
@@ -107,35 +110,41 @@ export async function POST(request: NextRequest) {
           const error = await branchQuoteResponses[i].text();
           return NextResponse.json(
             {
-              error: `Failed to get quote for branch ${branchIdx + 1}, swap ${i + 1}`,
+              error: `Failed to get quote for branch ${branchIdx + 1}, swap ${
+                i + 1
+              }`,
               details: error,
             },
-            { status: branchQuoteResponses[i].status },
+            { status: branchQuoteResponses[i].status }
           );
         }
 
         const orderData = await branchQuoteResponses[i].json();
 
         const router = (orderData as any)?.router;
-        console.log(router, ">>>>>>")
+        console.log(router, ">>>>>>");
 
         if (orderData.errorCode !== undefined && orderData.errorCode !== 0) {
           return NextResponse.json(
             {
-              error: `Jupiter Ultra API error for branch ${branchIdx + 1}, swap ${i + 1}`,
+              error: `Jupiter Ultra API error for branch ${
+                branchIdx + 1
+              }, swap ${i + 1}`,
               errorCode: orderData.errorCode,
               errorMessage: orderData.errorMessage,
             },
-            { status: 400 },
+            { status: 400 }
           );
         }
 
         if (!orderData.transaction || orderData.transaction === "") {
           return NextResponse.json(
             {
-              error: `Jupiter Ultra returned empty transaction for branch ${branchIdx + 1}, swap ${i + 1}`,
+              error: `Jupiter Ultra returned empty transaction for branch ${
+                branchIdx + 1
+              }, swap ${i + 1}`,
             },
-            { status: 400 },
+            { status: 400 }
           );
         }
 
@@ -143,12 +152,11 @@ export async function POST(request: NextRequest) {
       }
 
       // Deserialize swap transactions for this branch
-      const branchSwapTransactions: VersionedTransaction[] = branchQuotesData.map(
-        (quoteData) => {
+      const branchSwapTransactions: VersionedTransaction[] =
+        branchQuotesData.map((quoteData) => {
           const buffer = Buffer.from(quoteData.transaction, "base64");
           return VersionedTransaction.deserialize(buffer);
-        },
-      );
+        });
 
       // Get recent blockhash from the first swap transaction (same for all)
       if (branchIdx === 0) {
@@ -156,13 +164,13 @@ export async function POST(request: NextRequest) {
       }
 
       // Create tip transaction for this branch's bundle
-      const randomTipAccount =
-        JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)];
+      const tipAccountIndex = branchIdx % JITO_TIP_ACCOUNTS.length;
+      const tipAccount = JITO_TIP_ACCOUNTS[tipAccountIndex];
 
       const tipInstruction = SystemProgram.transfer({
         fromPubkey: new PublicKey(userPublicKey),
-        toPubkey: new PublicKey(randomTipAccount),
-        lamports: Number(jitoTip || 100000),
+        toPubkey: new PublicKey(tipAccount),
+        lamports: Number(jitoTip || 100000) * 3,
       });
 
       const tipMessage = new TransactionMessage({
@@ -184,10 +192,16 @@ export async function POST(request: NextRequest) {
       bundles.push(bundleTransactions);
       totalSwaps += branch.length;
 
-      console.log(`[Build] Branch ${branchIdx + 1} bundle created: ${branch.length} swaps + 1 tip = ${bundleTransactions.length} txs`);
+      console.log(
+        `[Build] Branch ${branchIdx + 1} bundle created: ${
+          branch.length
+        } swaps + 1 tip = ${bundleTransactions.length} txs`
+      );
     }
 
-    console.log(`[Build] Created ${bundles.length} bundles for ${totalSwaps} total swaps`);
+    console.log(
+      `[Build] Created ${bundles.length} bundles for ${totalSwaps} total swaps`
+    );
 
     return NextResponse.json({
       bundles,
@@ -201,7 +215,7 @@ export async function POST(request: NextRequest) {
         error: "Internal server error",
         details: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
