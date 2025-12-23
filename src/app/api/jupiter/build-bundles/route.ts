@@ -1,7 +1,4 @@
 import {
-  AddressLookupTableAccount,
-  ComputeBudgetProgram,
-  Connection,
   PublicKey,
   SystemProgram,
   TransactionMessage,
@@ -12,7 +9,6 @@ import { NextResponse } from "next/server";
 
 const JUPITER_ULTRA_BASE_URL = "https://api.jup.ag/ultra/v1";
 const JUPITER_API_KEY = process.env.JUPITER_API_KEY;
-const SOLANA_RPC_URL = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 
 const JITO_TIP_ACCOUNTS = [
   "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
@@ -146,71 +142,11 @@ export async function POST(request: NextRequest) {
         branchQuotesData.push(orderData);
       }
 
-      // Deserialize swap transactions and fetch address lookup tables
-      const connection = new Connection(SOLANA_RPC_URL);
-
-      // First pass: deserialize all transactions and collect unique ALT addresses
-      const deserializedTxs = branchQuotesData.map((quoteData) => {
-        const buffer = Buffer.from(quoteData.transaction, "base64");
-        return VersionedTransaction.deserialize(buffer);
-      });
-
-      // Collect all unique address lookup table addresses
-      const altAddresses = new Set<string>();
-      for (const tx of deserializedTxs) {
-        for (const lookup of tx.message.addressTableLookups) {
-          altAddresses.add(lookup.accountKey.toBase58());
-        }
-      }
-
-      // Fetch all address lookup tables
-      const altAccountsMap = new Map<string, AddressLookupTableAccount>();
-      if (altAddresses.size > 0) {
-        const altPublicKeys = Array.from(altAddresses).map(addr => new PublicKey(addr));
-        const altAccountInfos = await connection.getMultipleAccountsInfo(altPublicKeys);
-
-        altPublicKeys.forEach((pubkey, index) => {
-          const accountInfo = altAccountInfos[index];
-          if (accountInfo) {
-            const alt = new AddressLookupTableAccount({
-              key: pubkey,
-              state: AddressLookupTableAccount.deserialize(accountInfo.data),
-            });
-            altAccountsMap.set(pubkey.toBase58(), alt);
-          }
-        });
-      }
-
-      // Second pass: add compute budget instructions to each transaction
-      const branchSwapTransactions: VersionedTransaction[] = deserializedTxs.map(
-        (tx) => {
-          // Resolve address lookup tables for this transaction
-          const lookupTableAccounts = tx.message.addressTableLookups.map(
-            (lookup) => altAccountsMap.get(lookup.accountKey.toBase58())!
-          ).filter(Boolean);
-
-          // Decompile with resolved lookup tables
-          const message = TransactionMessage.decompile(tx.message, {
-            addressLookupTableAccounts: lookupTableAccounts,
-          });
-
-          // Add compute budget instructions
-          const computeUnitLimit = ComputeBudgetProgram.setComputeUnitLimit({
-            units: 1_400_000,
-          });
-          const computeUnitPrice = ComputeBudgetProgram.setComputeUnitPrice({
-            microLamports: 1_000_000,
-          });
-
-          message.instructions = [
-            computeUnitLimit,
-            computeUnitPrice,
-            ...message.instructions,
-          ];
-
-          // Recompile with the same lookup tables
-          const newMessage = message.compileToV0Message(lookupTableAccounts);
-          return new VersionedTransaction(newMessage);
+      // Deserialize swap transactions for this branch
+      const branchSwapTransactions: VersionedTransaction[] = branchQuotesData.map(
+        (quoteData) => {
+          const buffer = Buffer.from(quoteData.transaction, "base64");
+          return VersionedTransaction.deserialize(buffer);
         },
       );
 
